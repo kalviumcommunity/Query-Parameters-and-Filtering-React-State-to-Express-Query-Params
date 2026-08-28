@@ -21,25 +21,47 @@
 // (GET /api/threads?search=react&sort=newest); changing the sort refetches
 // immediately with the new sort in the URL.
 // ─────────────────────────────────────────────────────────────
-import { useQuery } from "@tanstack/react-query";
+
+import { useState } from "react";
+import { useQuery, keepPreviousData } from "@tanstack/react-query";
 import { getThreads } from "../services/threads.service";
+import { useDebounce } from "../hooks/useDebounce";
 import SearchBar from "./SearchBar.jsx";
 import SortDropdown from "./SortDropdown.jsx";
 
 export default function ThreadList() {
-  // TODO: add search + sort state and debounce the search value.
+  // Add search state.
+  // This stores whatever the user is currently typing.
+  const [search, setSearch] = useState("");
+
+  // Add sort state.
+  // This stores the selected sorting option.
+  const [sort, setSort] = useState("newest");
+
+  // Debounce ONLY the search.
+  // This waits 300ms after the user stops typing before updating the query.
+  const debouncedSearch = useDebounce(search, 300);
 
   const { data, isPending, isError, error } = useQuery({
-    queryKey: ["threads"], // TODO: make dynamic → ["threads", { search: debouncedSearch, sort }]
-    queryFn: getThreads, // TODO: ({ queryKey }) => getThreads(queryKey[1])
+    // Make the queryKey dynamic.
+    // Changing search or sort creates a different query.
+    queryKey: ["threads", { search: debouncedSearch, sort }],
+
+    // Get the filters from the queryKey and send them to getThreads().
+    queryFn: ({ queryKey }) => getThreads(queryKey[1]),
+
+    // Keep the old list visible while the new filtered data is loading.
+    placeholderData: keepPreviousData,
   });
 
   return (
     <div>
       <div className="filters">
-        {/* TODO: wire value + onChange to your state */}
-        <SearchBar value="" onChange={() => {}} />
-        <SortDropdown value="newest" onChange={() => {}} />
+        {/* Connect the SearchBar to our search state. */}
+        <SearchBar value={search} onChange={setSearch} />
+
+        {/* Connect the SortDropdown to our sort state. */}
+        <SortDropdown value={sort} onChange={setSort} />
       </div>
 
       {isError && <p className="err">Error: {error.message}</p>}
