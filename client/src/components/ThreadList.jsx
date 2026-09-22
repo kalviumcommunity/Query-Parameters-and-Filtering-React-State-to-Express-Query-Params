@@ -21,7 +21,7 @@
 // (GET /api/threads?search=react&sort=newest); changing the sort refetches
 // immediately with the new sort in the URL.
 // ─────────────────────────────────────────────────────────────
-import { useQuery } from "@tanstack/react-query";
+/*import { useQuery } from "@tanstack/react-query";
 import { getThreads } from "../services/threads.service";
 import SearchBar from "./SearchBar.jsx";
 import SortDropdown from "./SortDropdown.jsx";
@@ -37,7 +37,7 @@ export default function ThreadList() {
   return (
     <div>
       <div className="filters">
-        {/* TODO: wire value + onChange to your state */}
+        // {/* TODO: wire value + onChange to your state }
         <SearchBar value="" onChange={() => {}} />
         <SortDropdown value="newest" onChange={() => {}} />
       </div>
@@ -49,6 +49,78 @@ export default function ThreadList() {
       ) : (
         <ul className="threads">
           {data.map((t) => (
+            <li className="card" key={t.id}>
+              <h3>{t.title}</h3>
+              <p>{t.body}</p>
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
+  );
+}
+*/
+import { useState } from "react";
+import {
+  useQuery,
+  keepPreviousData,
+} from "@tanstack/react-query";
+
+import { getThreads } from "../services/threads.service";
+import SearchBar from "./SearchBar.jsx";
+import SortDropdown from "./SortDropdown.jsx";
+import { useDebounce } from "../hooks/useDebounce";
+
+export default function ThreadList() {
+  // Search and sort state
+  const [search, setSearch] = useState("");
+  const [sort, setSort] = useState("newest");
+
+  // Debounce only the search value
+  const debouncedSearch = useDebounce(search, 300);
+
+  const { data, isPending, isError, error } = useQuery({
+    // Dynamic queryKey with search and sort
+    queryKey: [
+      "threads",
+      {
+        search: debouncedSearch,
+        sort,
+      },
+    ],
+
+    // Pass filters from queryKey to getThreads
+    queryFn: ({ queryKey }) => getThreads(queryKey[1]),
+
+    // Keep previous data while filters change
+    placeholderData: keepPreviousData,
+  });
+
+  return (
+    <div>
+      <div className="filters">
+        <SearchBar
+          value={search}
+          onChange={setSearch}
+        />
+
+        <SortDropdown
+          value={sort}
+          onChange={setSort}
+        />
+      </div>
+
+      {isError && (
+        <p className="err">
+          Error: {error.message}
+        </p>
+      )}
+
+      {isPending ? (
+        <p>Loading threads…</p>
+      ) : (
+        <ul className="threads">
+          {data?.map((t) => (
             <li className="card" key={t.id}>
               <h3>{t.title}</h3>
               <p>{t.body}</p>
