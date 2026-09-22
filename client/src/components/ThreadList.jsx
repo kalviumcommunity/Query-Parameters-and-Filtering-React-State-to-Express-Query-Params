@@ -26,7 +26,7 @@ import { useState } from "react";
 import { getThreads } from "../services/threads.service";
 import SearchBar from "./SearchBar.jsx";
 import SortDropdown from "./SortDropdown.jsx";
-import useDebounce from "../hooks/useDebounce";
+import { useDebounce } from "../hooks/useDebounce";
 
 export default function ThreadList() {
   const [search, setSearch] = useState("");
