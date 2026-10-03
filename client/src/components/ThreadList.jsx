@@ -25,21 +25,28 @@ import { useQuery } from "@tanstack/react-query";
 import { getThreads } from "../services/threads.service";
 import SearchBar from "./SearchBar.jsx";
 import SortDropdown from "./SortDropdown.jsx";
+import { useState } from "react";
+import { useQuery, keepPreviousData } from "@tanstack/react-query";
 
 export default function ThreadList() {
+  const[search,setSearch] = useState("");
+  const [sort, setSort] = useState("newest");
   // TODO: add search + sort state and debounce the search value.
+  const debouncedSearch = useDebounce(search, 300)
 
   const { data, isPending, isError, error } = useQuery({
-    queryKey: ["threads"], // TODO: make dynamic → ["threads", { search: debouncedSearch, sort }]
-    queryFn: getThreads, // TODO: ({ queryKey }) => getThreads(queryKey[1])
+    queryKey: ["threads",{ search: debouncedSearch, sort }], // TODO: make dynamic → ["threads", { search: debouncedSearch, sort }]
+    queryFn: ({queryKey})=getThreads(queryKey[1]), // TODO: ({ queryKey }) => getThreads(queryKey[1])
+    placeholderData: keepPreviousData
   });
+
 
   return (
     <div>
       <div className="filters">
         {/* TODO: wire value + onChange to your state */}
-        <SearchBar value="" onChange={() => {}} />
-        <SortDropdown value="newest" onChange={() => {}} />
+        <SearchBar value={search} onChange={setSearch} />
+        <SortDropdown value={sort} onChange={setSort} />
       </div>
 
       {isError && <p className="err">Error: {error.message}</p>}
